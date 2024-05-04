@@ -37,6 +37,8 @@ func (p *Pubsub) Subscriptions() ([]Subscription, error) {
 			return nil, err
 		}
 
+		p.subscriptions[sub.ID()] = sub
+
 		dlt := ""
 		if sub.DeadLetterPolicy != nil {
 			dlt = sub.DeadLetterPolicy.DeadLetterTopic
@@ -56,9 +58,9 @@ func (p *Pubsub) Subscriptions() ([]Subscription, error) {
 func (p *Pubsub) Messages(ctx context.Context, subscription string) chan Message {
 	// TODO: Handle errors
 	sub := p.client.Subscription(subscription)
-	sub.ReceiveSettings.MinExtensionPeriod = 0
-	sub.ReceiveSettings.MaxExtensionPeriod = 0
-	sub.ReceiveSettings.MaxExtension = 0
+	sub.ReceiveSettings.MinExtensionPeriod = 20 * time.Second
+	sub.ReceiveSettings.MaxExtensionPeriod = 20 * time.Second
+	sub.ReceiveSettings.MaxExtension = 20 * time.Second
 	sub.ReceiveSettings.NumGoroutines = 1
 
 	existingMsgs := map[string]bool{}
@@ -76,4 +78,16 @@ func (p *Pubsub) Messages(ctx context.Context, subscription string) chan Message
 	})
 
 	return msg
+}
+
+func (p *Pubsub) Publish(subscription string, content string) error {
+	sub := p.subscriptions[subscription]
+
+	result := sub.Topic.Publish(context.Background(), &pubsub.Message{
+		Data: []byte(content),
+	})
+
+	_, err := result.Get(context.Background())
+
+	return err
 }

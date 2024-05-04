@@ -29,7 +29,7 @@ type ui struct {
 	pages      *tview.Pages
 	keyActions *keyactions.KeyActions
 	header     redrawablePrimitive
-	screen     redrawablePrimitive
+	screen     *screen.Screen
 }
 
 func Render(app app) error {

@@ -10,8 +10,9 @@ import (
 )
 
 type Pubsub struct {
-	client       *pubsub.Client
-	emulatorHost string
+	client        *pubsub.Client
+	emulatorHost  string
+	subscriptions map[string]*pubsub.SubscriptionConfig
 }
 
 func New(project, emulatorHost string) (*Pubsub, error) {
@@ -34,7 +35,8 @@ func New(project, emulatorHost string) (*Pubsub, error) {
 	}
 
 	ps := &Pubsub{
-		emulatorHost: emulatorHost,
+		emulatorHost:  emulatorHost,
+		subscriptions: make(map[string]*pubsub.SubscriptionConfig),
 	}
 
 	if err := ps.UpdateProject(project); err != nil {

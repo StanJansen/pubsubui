@@ -7,9 +7,10 @@ import (
 )
 
 type modal struct {
-	view       tview.Primitive
-	keyActions *keyactions.KeyActions
-	pages      *tview.Pages
+	view        tview.Primitive
+	keyActions  *keyactions.KeyActions
+	pages       *tview.Pages
+	originalEsc func() bool
 }
 
 func NewModal(k *keyactions.KeyActions, pages *tview.Pages, p tview.Primitive, title string, width, height int) modal {
@@ -27,12 +28,14 @@ func NewModal(k *keyactions.KeyActions, pages *tview.Pages, p tview.Primitive, t
 
 func (m modal) Open() {
 	m.pages.AddPage("modal", m.view, true, true)
+	m.originalEsc = m.keyActions.GetAction(tcell.KeyEsc, ' ')
 	m.keyActions.Replace(tcell.KeyEsc, ' ', m.Close)
 	m.pages.ShowPage("modal")
 }
 
 func (m modal) Close() bool {
 	m.pages.RemovePage("modal")
+	m.keyActions.Replace(tcell.KeyEsc, ' ', m.originalEsc)
 
 	return true
 }

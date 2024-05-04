@@ -23,7 +23,7 @@ func (h *header) keyActionsView() tview.Primitive {
 		return table
 	}
 
-	actions := h.KeyActions.Get()
+	actions := h.KeyActions.GetAll()
 	flex := tview.NewFlex().
 		SetDirection(tview.FlexColumn)
 

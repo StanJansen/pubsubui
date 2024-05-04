@@ -9,17 +9,18 @@ import (
 	"github.com/rivo/tview"
 	"github.com/stanjansen/pubsubui/internal/pubsub"
 	"github.com/stanjansen/pubsubui/internal/ui/theme"
+	"golang.design/x/clipboard"
 )
 
 type messageList struct {
-	screen        *screen
+	screen        *Screen
 	msgChan       <-chan pubsub.Message
 	loading       bool
 	ackedMessages map[string]bool
 	messages      map[string]pubsub.Message
 }
 
-func (s *screen) drawSubscription() {
+func (s *Screen) drawSubscription() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	msgs := messageList{
 		screen:        s,
@@ -44,6 +45,7 @@ func (s *screen) drawSubscription() {
 		s.subscription = ""
 		s.KeyActions.Remove(tcell.KeyRune, 'r')
 		s.KeyActions.Remove(tcell.KeyRune, 'a')
+		s.KeyActions.Remove(tcell.KeyRune, 'c')
 		s.Redraw()
 		return true
 	})
@@ -64,11 +66,19 @@ func (s *screen) drawSubscription() {
 		}
 		return true
 	})
+	s.KeyActions.Add("Copy data", tcell.KeyRune, 'c', func() bool {
+		row, _ := s.table.GetSelection()
+		data := s.table.GetCell(row, 2).Text
+		if data != "" {
+			clipboard.Write(clipboard.FmtText, []byte(data))
+		}
+		return true
+	})
 
 	s.drawSubscriptionTable(&msgs)
 }
 
-func (s *screen) drawSubscriptionTable(msgs *messageList) {
+func (s *Screen) drawSubscriptionTable(msgs *messageList) {
 	s.table.Clear()
 	s.table.SetFixed(1, 1)
 	s.table.SetCell(0, 0, tview.NewTableCell("ID").SetAlign(tview.AlignLeft).SetExpansion(1).SetSelectable(false))
@@ -86,11 +96,6 @@ func (s *screen) drawSubscriptionTable(msgs *messageList) {
 			s.RefreshApp()
 		}
 	}()
-
-	// s.table.SetSelectedFunc(func(row int, column int) {
-	// 	s.subscription = s.table.GetCell(row, 0).Text
-	// 	s.Redraw()
-	// })
 
 	msgs.drawSubscriptionTitle()
 }

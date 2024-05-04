@@ -17,7 +17,7 @@ type Config struct {
 	RefreshApp func()
 }
 
-type screen struct {
+type Screen struct {
 	*Config
 	table         *tview.Table
 	subscriptions []pubsub.Subscription
@@ -27,13 +27,13 @@ type screen struct {
 	loading        bool
 }
 
-func NewScreen(c *Config) *screen {
+func NewScreen(c *Config) *Screen {
 	table := tview.NewTable().
 		SetSelectable(true, false)
 
 	table.SetBorderPadding(0, 0, 1, 1)
 
-	screen := screen{
+	screen := Screen{
 		Config:         c,
 		table:          table,
 		subscriptions:  []pubsub.Subscription{},
@@ -45,11 +45,26 @@ func NewScreen(c *Config) *screen {
 	return &screen
 }
 
-func (s *screen) Primitive() tview.Primitive {
+func (s *Screen) SelectedSubscription() string {
+	if s.subscription != "" {
+		return s.subscription
+	}
+
+	row, _ := s.table.GetSelection()
+
+	cell := s.table.GetCell(row, 0)
+	if cell == nil {
+		return ""
+	}
+
+	return cell.Text
+}
+
+func (s *Screen) Primitive() tview.Primitive {
 	return s.table
 }
 
-func (s *screen) Redraw() {
+func (s *Screen) Redraw() {
 	for _, cancel := range s.contextCancels {
 		cancel()
 	}
@@ -64,7 +79,7 @@ func (s *screen) Redraw() {
 	}
 }
 
-func (s *screen) Reset() {
+func (s *Screen) Reset() {
 	s.subscription = ""
 	s.subscriptions = []pubsub.Subscription{}
 	s.Redraw()

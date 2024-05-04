@@ -6,12 +6,13 @@ import (
 	"sort"
 	"time"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	"github.com/stanjansen/pubsubui/internal/pubsub"
 	"github.com/stanjansen/pubsubui/internal/ui/theme"
 )
 
-func (s *screen) drawProject() {
+func (s *Screen) drawProject() {
 	s.loading = true
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -19,9 +20,11 @@ func (s *screen) drawProject() {
 	go s.loadSubscriptions(ctx, cancel)
 
 	s.drawProjectTable(cancel)
+
+	s.KeyActions.Add("Pull", tcell.KeyEnter, ' ', nil)
 }
 
-func (s *screen) drawProjectTable(cancel context.CancelFunc) {
+func (s *Screen) drawProjectTable(cancel context.CancelFunc) {
 	s.table.Clear()
 	s.table.SetFixed(1, 1)
 	s.table.SetCell(0, 0, tview.NewTableCell("NAME").SetAlign(tview.AlignLeft).SetExpansion(10).SetSelectable(false))
@@ -36,13 +39,14 @@ func (s *screen) drawProjectTable(cancel context.CancelFunc) {
 	s.table.SetSelectedFunc(func(row int, column int) {
 		cancel()
 		s.subscription = s.table.GetCell(row, 0).Text
+		s.KeyActions.Remove(tcell.KeyEnter, ' ')
 		s.Redraw()
 	})
 
 	s.drawProjectTitle()
 }
 
-func (s *screen) drawProjectTitle() {
+func (s *Screen) drawProjectTitle() {
 	statusColor := "lightblue"
 	if s.loading {
 		statusColor = "red"
@@ -51,7 +55,7 @@ func (s *screen) drawProjectTitle() {
 	s.table.SetTitle(fmt.Sprintf(" Subscriptions [%s::b]<%s> ", statusColor, s.Pubsub.Project())).SetBorder(true)
 }
 
-func (s *screen) loadSubscriptions(ctx context.Context, cancel context.CancelFunc) {
+func (s *Screen) loadSubscriptions(ctx context.Context, cancel context.CancelFunc) {
 	load := func() {
 		if s.subscription != "" {
 			return
@@ -87,7 +91,7 @@ func (s *screen) loadSubscriptions(ctx context.Context, cancel context.CancelFun
 	}
 }
 
-func (s *screen) sortedSubscriptions() []pubsub.Subscription {
+func (s *Screen) sortedSubscriptions() []pubsub.Subscription {
 	subs := make([]pubsub.Subscription, len(s.subscriptions))
 	copy(subs, s.subscriptions)
 

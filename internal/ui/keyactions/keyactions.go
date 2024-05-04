@@ -73,12 +73,26 @@ func (k *KeyActions) Replace(key tcell.Key, char rune, action func() bool) *KeyA
 	return k
 }
 
-func (k *KeyActions) Get() []KeyAction {
+func (k *KeyActions) GetAll() []KeyAction {
 	return k.keyActions
+}
+
+func (k *KeyActions) GetAction(key tcell.Key, char rune) func() bool {
+	for _, s := range k.keyActions {
+		if s.key == key && s.char == char {
+			return s.action
+		}
+	}
+
+	return nil
 }
 
 func (k *KeyActions) setInputCapture() {
 	k.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if _, ok := k.app.GetFocus().(tview.FormItem); ok {
+			return event
+		}
+
 		for _, s := range k.keyActions {
 			if s.key != event.Key() {
 				continue
